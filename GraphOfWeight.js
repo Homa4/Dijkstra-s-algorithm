@@ -103,6 +103,27 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.restore();
     }
 
+    function drawArrow(x2, y2, angle) {
+        const arrowSize = 12;
+        const gapX = Math.cos(angle) * radius;
+        const gapY = Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.fillStyle = 'black';
+        ctx.moveTo(x2 - gapX, y2 - gapY);
+        ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle - Math.PI / 6) - gapY);
+        ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle + Math.PI / 6) - gapY);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function calculatingMidOfArc(start, middle, end){
+        const distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+        const arcTopMidX = (start.x/4) + (middle.x/2) + (end.x/4);
+        const arcTopMidY = (start.y/4) + (middle.y/2) + (end.y/4);
+
+        return {x: arcTopMidX, y: arcTopMidY};
+    }
+
     function drawGraph(numberOfVertex) {
         let temp = numberOfVertex - 3;
         let tempForFun;
@@ -123,7 +144,7 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.closePath();
     }
 
-    function drawArc(start, end, arrowDistance = 20, bendAngle = Math.PI / 8, weight) {
+    function drawArc(start, end, bendAngle = Math.PI / 8, weight) {
         let midX = (start.x + end.x) / 2;
         let midY = (start.y + end.y) / 2;
 
@@ -132,7 +153,8 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         let newEndX = end.x - (end.x - start.x) / distance;
         let newEndY = end.y - (end.y - start.y) / distance;
 
-        let controlX, controlY;
+        let controlX;
+        let controlY;
         if (start.x !== end.x && start.y !== end.y) {
             controlX = midX + Math.cos(bendAngle) * (midY - start.y);
             controlY = midY + Math.sin(bendAngle) * (midX - start.x);
@@ -149,11 +171,34 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.quadraticCurveTo(controlX, controlY, newEndX, newEndY);
         ctx.stroke();
 
-        drawWeight({ x: midX, y: midY }, weight, bendAngle);
+        const objWithCordsForWeight = calculatingMidOfArc(start, {x: controlX, y: controlY}, end);
+        drawWeight(objWithCordsForWeight, weight, bendAngle);
+
+        return { newEndX, newEndY, controlX, controlY };
     }
 
-    function drawArcArrow(start, end, arrowDistance = 10, bendAngle = Math.PI / 1, weight) {
-        drawArc(start, end, arrowDistance, bendAngle, weight);
+    function drawArcArrow(start, end, bendAngle = Math.PI / 1, weight) {
+        const arrowSize = 15;
+        const arrow = drawArc(start, end, bendAngle, weight);
+        const newEndX = arrow.newEndX;
+        const newEndY = arrow.newEndY;
+        const controlX = arrow.controlX;
+        const controlY = arrow.controlY;
+
+        const angle = Math.atan2(newEndY - controlY, newEndX - controlX);
+
+        ctx.save();
+        ctx.translate(newEndX, newEndY);
+        ctx.rotate(angle);
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-arrowSize, arrowSize / 2);
+        ctx.lineTo(-arrowSize, -arrowSize / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        
     }
 
     function drawStraitLine(start, end, angle, weight) {
@@ -161,6 +206,7 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.moveTo(start.x, start.y);
         ctx.lineTo(end.x, end.y);
         ctx.stroke();
+        drawArrow(end.x, end.y, angle);
         ctx.closePath();
 
         const midX = (start.x + end.x) / 2;
