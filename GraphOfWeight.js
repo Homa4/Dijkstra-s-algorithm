@@ -103,21 +103,20 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.restore();
     }
 
-    function drawArrow(x2, y2, angle) {
-        const arrowSize = 12;
-        const gapX = Math.cos(angle) * radius;
-        const gapY = Math.sin(angle) * radius;
-        ctx.beginPath();
-        ctx.fillStyle = 'black';
-        ctx.moveTo(x2 - gapX, y2 - gapY);
-        ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle - Math.PI / 6) - gapY);
-        ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle + Math.PI / 6) - gapY);
-        ctx.closePath();
-        ctx.fill();
-    }
+    // function drawArrow(x2, y2, angle) {
+    //     const arrowSize = 12;
+    //     const gapX = Math.cos(angle) * radius;
+    //     const gapY = Math.sin(angle) * radius;
+    //     ctx.beginPath();
+    //     ctx.fillStyle = 'black';
+    //     ctx.moveTo(x2 - gapX, y2 - gapY);
+    //     ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle - Math.PI / 6) - gapY);
+    //     ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6) - gapX, y2 - arrowSize * Math.sin(angle + Math.PI / 6) - gapY);
+    //     ctx.closePath();
+    //     ctx.fill();
+    // }
 
     function calculatingMidOfArc(start, middle, end){
-        const distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
         const arcTopMidX = (start.x/4) + (middle.x/2) + (end.x/4);
         const arcTopMidY = (start.y/4) + (middle.y/2) + (end.y/4);
 
@@ -180,25 +179,6 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
     function drawArcArrow(start, end, bendAngle = Math.PI / 1, weight) {
         const arrowSize = 15;
         const arrow = drawArc(start, end, bendAngle, weight);
-        const newEndX = arrow.newEndX;
-        const newEndY = arrow.newEndY;
-        const controlX = arrow.controlX;
-        const controlY = arrow.controlY;
-
-        const angle = Math.atan2(newEndY - controlY, newEndX - controlX);
-
-        ctx.save();
-        ctx.translate(newEndX, newEndY);
-        ctx.rotate(angle);
-        ctx.fillStyle = 'black';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-arrowSize, arrowSize / 2);
-        ctx.lineTo(-arrowSize, -arrowSize / 2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-        
     }
 
     function drawStraitLine(start, end, angle, weight) {
@@ -206,7 +186,6 @@ const graphOfWeight = (rad, numOfVertex, matrix) => {
         ctx.moveTo(start.x, start.y);
         ctx.lineTo(end.x, end.y);
         ctx.stroke();
-        drawArrow(end.x, end.y, angle);
         ctx.closePath();
 
         const midX = (start.x + end.x) / 2;
