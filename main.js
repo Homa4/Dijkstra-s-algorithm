@@ -1,6 +1,6 @@
 import generateMatrixOfWeight from './matrixGenerator.js';
 import graphOfWeight from './GraphOfWeight.js';
-import dijkstra from './dijkstraAlgorithm.js';
+import { createVertex, dijkstra } from './dijkstraAlgorithm.js';
 import { radius, numOfVertex, button, buttonDijkstra } from './elementsFromHTML.js';
 
 
@@ -12,8 +12,8 @@ button.addEventListener("click", () => {
     graphOfWeight(radiusValue, numberOfVertex, matrixOfWeight);
 
     buttonDijkstra.addEventListener("click", () => {
-    
-        dijkstra(numOfVertex, radiusValue, matrixOfWeight);
+        createVertex(numberOfVertex, radiusValue, matrixOfWeight);
+        dijkstra(numberOfVertex, radiusValue, matrixOfWeight);
     })
 });
 
