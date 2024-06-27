@@ -55,6 +55,12 @@ function generateMatrixOfWeight(numOfVertex) {
         matrixC[i][i] = 0;
     }
 
+    for (let i = 0; i < numOfVertex; i++) {
+        for(let j = 0; j < numOfVertex; j++){
+            matrixC[i][j] = matrixC[j][i];
+        }
+    }
+
     return matrixC;
 }
 
