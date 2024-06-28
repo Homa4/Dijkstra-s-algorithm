@@ -1,12 +1,13 @@
-const createVertex = (numberOfVertex, radius, matrix) => {
+const arrOfVertex = [];
+const arrOfVertexDx2 = [];
+
+const createVertex = (numberOfVertex, radius) => {
     const canvas = document.querySelector("canvas#canvas-Dijkstra");
     const ctx = canvas.getContext('2d');
     canvas.width = 1000;
     canvas.height = 600;
     const width = canvas.width;
     const height = canvas.height;
-    const arrOfVertex = [];
-    const arrOfVertexDx2 = [];
 
     function fillLinesWithVertex(firstLineCount, thirdLineCount) {
         const secondLineCount = 3;
@@ -39,7 +40,7 @@ const createVertex = (numberOfVertex, radius, matrix) => {
         }
     }
 
-    function generateMisRange(cord) {
+    function generateMisRange(cord, radius) {
         const resArr = [];
         let temp = cord;
         for (let i = 0; i < radius; i++) {
@@ -58,8 +59,8 @@ const createVertex = (numberOfVertex, radius, matrix) => {
         return resArr;
     }
 
-    function checkingIfHasMis(cordX) {
-        const arr = generateMisRange(cordX);
+    function checkingIfHasMis(cordX, radius) {
+        const arr = generateMisRange(cordX, radius);
         return arrOfVertexDx2.some(elem => arr.includes(elem.x));
     }
 
@@ -89,7 +90,19 @@ const createVertex = (numberOfVertex, radius, matrix) => {
             fillLinesWithVertex(first, second);
         }
     }
+
+    function drawLine(x1, y1, x2, y2) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     drawGraph(numberOfVertex);
+
+    return { arrOfVertex, drawLine };
 }
 
 class LinkedListNode {
@@ -234,9 +247,227 @@ class LinkedList {
     }
 }
 
-const dijkstra = (numberOfVertex, radiusValue, matrixOfWeight) => {
-    console.log('all right');
+function neighborsDetector(matrix, numberOfVertex) {
+    const neighborsHip = new Set();
+    for (let i = 0; i < numberOfVertex; i++) {
+        const temp = [];
+        for (let j = 0; j < numberOfVertex; j++) {
+            if (matrix[i][j] > 0) {
+                temp.push(j);
+            }
+        }
+        neighborsHip.add(temp);
+    }
+
+    return neighborsHip;
+}
+
+function generateMisRange(cord, radius) {
+    const resArr = [];
+    let temp = cord;
+    for (let i = 0; i < radius; i++) {
+        temp--;
+        resArr.push(temp);
+    }
+
+    resArr.reverse();
+    resArr.push(cord);
+    temp = cord;
+
+    for (let i = 0; i < radius; i++) {
+        temp++;
+        resArr.push(temp);
+    }
+    return resArr;
+}
+
+function checkingIfHasMis(cordX, radius) {
+    const arr = generateMisRange(cordX, radius);
+    return arrOfVertexDx2.some(elem => arr.includes(elem.x));
+}
+
+function drawWeight(cords, weight, angle, radius) {
+    const ctx = document.querySelector("canvas#canvas-Dijkstra").getContext('2d');
+    ctx.save();
+    ctx.translate(cords.x, cords.y);
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radius - 10, (radius - 10) / 2, angle, 0, Math.PI * 2);
+    ctx.fillStyle = '#9DBF9E';
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.fillStyle = 'black';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.fillText(weight, 0, 0);
+
+    ctx.restore();
+}
+
+function calculatingMidOfArc(start, middle, end) {
+    const arcTopMidX = (start.x / 4) + (middle.x / 2) + (end.x / 4);
+    const arcTopMidY = (start.y / 4) + (middle.y / 2) + (end.y / 4);
+
+    return { x: arcTopMidX, y: arcTopMidY };
+}
+
+function drawArc(start, end, bendAngle = Math.PI / 8, weight, radius) {
+    const ctx = document.querySelector("canvas#canvas-Dijkstra").getContext('2d');
+    let midX = (start.x + end.x) / 2;
+    let midY = (start.y + end.y) / 2;
+
+    let distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+
+    let newEndX = end.x - (end.x - start.x) / distance;
+    let newEndY = end.y - (end.y - start.y) / distance;
+
+    let controlX;
+    let controlY;
+    if (start.x !== end.x && start.y !== end.y) {
+        controlX = midX + Math.cos(bendAngle) * (midY - start.y);
+        controlY = midY + Math.sin(bendAngle) * (midX - start.x);
+    } else if (start.x === end.x) {
+        controlX = midX + 100;
+        controlY = midY;
+    } else {
+        controlX = midX;
+        controlY = midY + 100;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.quadraticCurveTo(controlX, controlY, newEndX, newEndY);
+    ctx.stroke();
+
+    const objWithCordsForWeight = calculatingMidOfArc(start, { x: controlX, y: controlY }, end);
+    drawWeight(objWithCordsForWeight, weight, bendAngle, radius);
+
+    return { newEndX, newEndY, controlX, controlY };
+}
+
+function drawArcArrow(start, end, bendAngle = Math.PI / 1, weight, radius) {
+    drawArc(start, end, bendAngle, weight, radius);
+}
+
+function drawStraitLine(start, end, angle, weight, radius) {
+    const ctx = document.querySelector("canvas#canvas-Dijkstra").getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.closePath();
+
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    drawWeight({ x: midX, y: midY }, weight, angle, radius);
+}
+
+function drawEdgeLine(start, end, angle, weight, radius) {
+    const { x: x1, y: y1 } = start;
+    const { x: x2, y: y2 } = end;
+
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    const hasMis = checkingIfHasMis(midX, radius);
+
+    let drawArc = false;
+
+    arrOfVertex.forEach((elem) => {
+        if (elem.x === midX && elem.y === midY) {
+            drawArc = true;
+        } else if (hasMis && elem.y === midY) {
+            drawArc = true;
+        }
+    });
+
+    if (drawArc) {
+        drawArcArrow({ x: x1, y: y1 }, { x: x2, y: y2 }, angle, weight, radius);
+    } else {
+        drawStraitLine({ x: x1, y: y1 }, { x: x2, y: y2 }, angle, weight, radius);
+    }
 }
 
 
-export { createVertex, initializeDijkstra, iterateDijkstra };
+const dijkstra = (numberOfVertex, radiusValue, matrixOfWeight) => {
+    const distances = new Array(numberOfVertex).fill(Infinity);
+    const visited = new Array(numberOfVertex).fill(false);
+    const previous = new Array(numberOfVertex).fill(null);
+    distances[0] = 0;
+
+    const neighbors = [...neighborsDetector(matrixOfWeight, numberOfVertex)];
+    const edges = new LinkedList();
+
+    for (let i = 0; i < numberOfVertex; i++) {
+        for (let j = 0; j < numberOfVertex; j++) {
+            if (matrixOfWeight[i][j] > 0) {
+                edges.append({ start: i, end: j, weight: matrixOfWeight[i][j] });
+            }
+        }
+    }
+
+    while (true) {
+        let shortestDistance = Infinity;
+        let shortestIndex = -1;
+
+        for (let i = 0; i < distances.length; i++) {
+            if (!visited[i] && distances[i] < shortestDistance) {
+                shortestDistance = distances[i];
+                shortestIndex = i;
+            }
+        }
+
+        if (shortestIndex === -1) {
+            break;
+        }
+
+        visited[shortestIndex] = true;
+        const currentNeighbors = neighbors[shortestIndex];
+
+        for (const neighbor of currentNeighbors) {
+            const newDist = distances[shortestIndex] + matrixOfWeight[shortestIndex][neighbor];
+            if (newDist < distances[neighbor]) {
+                distances[neighbor] = newDist;
+                previous[neighbor] = shortestIndex;
+            }
+        }
+    }
+
+    // Reconstruct the shortest path from the first vertex to the last vertex
+    const shortestPath = [];
+    let path = [];
+    for (let at = numberOfVertex - 1; at != null; at = previous[at]) {
+        path.push(at);
+    }
+    path.reverse();
+
+    for (let j = 0; j < path.length - 1; j++) {
+        shortestPath.push({
+            start: path[j],
+            end: path[j + 1],
+            weight: matrixOfWeight[path[j]][path[j + 1]]
+        });
+    }
+
+    console.log('Shortest Path:', shortestPath);
+    drawShortestPathOnCanvas(shortestPath, arrOfVertex, radiusValue);
+}
+
+
+function drawShortestPathOnCanvas(shortestPath, vertexPositions, radius) {
+    shortestPath.forEach(edge => {
+        const { start, end, weight } = edge;
+        const startPos = vertexPositions[start];
+        const endPos = vertexPositions[end];
+        const angle = Math.atan2(endPos.y - startPos.y, endPos.x - startPos.x);
+        drawEdgeLine(startPos, endPos, angle, weight, radius);
+    });
+
+    console.log(vertexPositions);
+}
+
+
+export { createVertex, dijkstra };
